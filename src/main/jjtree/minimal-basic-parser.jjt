@@ -1,0 +1,114 @@
+options {
+    LOOKAHEAD = 3;
+    MULTI=true;
+    VISITOR=true;
+    NODE_DEFAULT_VOID=true;
+    FORCE_LA_CHECK=true;
+    DEBUG_LOOKAHEAD = false;
+    DEBUG_PARSER = false;
+    OTHER_AMBIGUITY_CHECK = 3;
+}
+
+PARSER_BEGIN(MinimalBasicParser)
+
+package com.cision.basic;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class MinimalBasicParser {
+
+   public MinimalBasicParser(){
+      super();
+   }
+}
+
+PARSER_END(MinimalBasicParser)
+
+SKIP : { " " }
+TOKEN : { < ADD_OP : ("+" | "-") > }
+TOKEN : { < DOLLAR : "$" > }
+TOKEN : { < END : "END" > }
+TOKEN : { < END_OF_LINE : "\n" > }
+TOKEN : { < EQUAL : "=" > }
+TOKEN : { < GOTO : "GOTO" >}
+TOKEN : { < INPUT : "INPUT" > }
+TOKEN : { < INT : "INT" > }
+TOKEN : { < IF : "IF" > }
+TOKEN : { < MULTIPLY_OP : ("*" | "/") > }
+TOKEN : { < NUMBER : (["0" - "9"])+ > }
+TOKEN : { < LEFT_BRACKET : "(" > }
+TOKEN : { < RELATION_OP : ( "<" | ">" | "<>" | ">=" | "<=") > }
+TOKEN : { < RIGHT_BRACKET : ")" > }
+TOKEN : { < RND : "RND" > }
+TOKEN : { < SEMICOLON : ";" > }
+TOKEN : { < TAB : "TAB" > }
+TOKEN : { < THEN : "THEN" > }
+TOKEN : { < PRINT : "PRINT" > }
+TOKEN : { < QUOATED_STRING: "\"" ("!" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "," | "/"
+    | ":" | ";" | "<" | "=" | ">" | "?" | "^" | "_" | "+" | "-" | "." | " " | ["A"-"Z"] | ["0"-"9"]
+    )* "\"" > }
+TOKEN : { <VAR : ["A"-"Z"] > }
+TOKEN : { <VAR_STRING : ["A"-"Z"] "$" > }
+
+
+//programm
+SimpleNode program() #Program : {} { (statement_line())+ end_line() {return jjtThis;} }
+void statement_line() #StatementLine : {Token t;} {
+ t=<NUMBER> {jjtThis.value=t.image;} statement() <END_OF_LINE>
+}
+void statement() : {} { print_statements() | if_statement() | goto_statement() | assignment() | input_statement() }
+void end_line() #EndLine: {Token t;} { t=<NUMBER> {jjtThis.value=t.image;} <END> <END_OF_LINE> }
+
+//assignment
+void assignment() #Assignment : {Token t;} { t=<VAR>{jjtThis.value=t.image;} <EQUAL> expression() }
+void expression() #Expression : {Token t;} {
+    term() ( add_operator() expression() )*
+}
+void add_operator() #AddOperator : {Token t;} { t=<ADD_OP>{jjtThis.value=t.image;} }
+void term() #Term : {} { factor() ( mult_operator() factor() )* }
+void mult_operator() #MultOperator : {Token t;} { t=<MULTIPLY_OP>{jjtThis.value=t.image;} }
+void factor() #Factor : {} { value() | <LEFT_BRACKET> expression() <RIGHT_BRACKET> }
+void value() #Value : {} { number() | variable() | random() | integer() }
+void number() #Number : {Token t;} { t=<NUMBER> {jjtThis.value=t.image;} }
+void random() #Random : {Token t;} {
+    <RND> <LEFT_BRACKET> expression() <RIGHT_BRACKET>
+}
+void integer() #Integer : {Token t;} {
+    <INT> <LEFT_BRACKET> expression() <RIGHT_BRACKET>
+}
+
+//print statement
+void print_statements() : {} { print_statement() (":" print_statement())* }
+void print_statement() #PrintSatement : {} {
+    <PRINT> (print_block() (";" print_block())*)?
+}
+void print_block() #PrintBlock: {} { quoated_string() | function() | variable() }
+void quoated_string() #QuoatedString : {Token t;} {
+   t=<QUOATED_STRING> {jjtThis.value=t.image;}
+}
+void function() : {} { tab()}
+void tab() #Tab : {Token t;} { <TAB> <LEFT_BRACKET> t=<NUMBER> {jjtThis.value=t.image;} <RIGHT_BRACKET> }
+void variable() #Variable : {Token t;} { t=<VAR> {jjtThis.value= t.image;}}
+
+//goto statement
+void goto_statement() #Goto : {Token t;} { <GOTO> t=<NUMBER> {jjtThis.value=t.image;}}
+
+//if statement
+void if_statement() #If : {Token t;} { <IF> ( condition() | string_condition() ) <THEN> t=<NUMBER> {jjtThis.value=t.image;} }
+void condition() #Condition : {} {
+    expression() (relation_operator() | equal_operator() ) expression()
+}
+void relation_operator() #RelationOperator : {Token t;} { t=<RELATION_OP> {jjtThis.value=t.image;} }
+void equal_operator() #EqualOperator : {Token t;} { t=<EQUAL> {jjtThis.value=t.image;} }
+void string_condition() #StringCondition : {} {
+    string() equal_operator() string()
+}
+void string() #String : {} { quoated_string() | string_variable() }
+
+//input statement
+void input_statement() #Input : {Token t;} {
+    <INPUT> quoated_string() <SEMICOLON> (number_variable() | string_variable())
+}
+void string_variable() #StringVariable : {Token t;} { t=<VAR_STRING> {jjtThis.value=t.image;} }
+void number_variable() #NumberVariable : {Token t;} { t=<VAR> {jjtThis.value=t.image;} }
