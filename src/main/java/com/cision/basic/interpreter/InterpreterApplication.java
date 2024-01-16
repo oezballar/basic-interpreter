@@ -18,7 +18,7 @@ public class InterpreterApplication {
 
       Map<Integer, SimpleNode> statementArray = new HashMap<>();
 
-      var stream = new FileInputStream("src/main/resources/test.bas");
+      var stream = new FileInputStream(args[0]);
       var parser = new MinimalBasicParser(stream, "utf-8");
       var ast = parser.program();
 
