@@ -1,7 +1,7 @@
 # A Basic Interpreter
 
 ## Introduction
-The task of Puzzlee 2023 is to build a compiler or interpreter that can process one or more games written in Basic from this page.
+The task of Puzzlee 2023 is to build a compiler or interpreter that can process one or more games written in Basic from the zip file Chris gave.
 I decided to get the aceyducey.bas game running because the language elements used seemed easy to implement. To avoid making a considerable effort, I use the JavaCC parser generator, which provides me with a visitor interface to traverse the abstract syntax tree easily.
 The grammar for autocreating the tokenizer and parser is in the src/main/jjtree minimal-basic-paerser.jjt file.
 
